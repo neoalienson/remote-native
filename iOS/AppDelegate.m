@@ -6,10 +6,11 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  */
+#import "RCTRootView.h"
 
 #import "AppDelegate.h"
 
-#import "RCTRootView.h"
+@import AVFoundation;
 
 @implementation AppDelegate
 
@@ -28,15 +29,7 @@
   // iOS device are on the same Wi-Fi network.
   jsCodeLocation = [NSURL URLWithString:@"http://home.orz.hk:8086/index.ios.bundle"];
 
-  // OPTION 2
-  // Load from pre-bundled file on disk. To re-generate the static bundle, run
-  //
-  // $ curl 'http://localhost:8081/index.ios.bundle?dev=false&minify=true' -o iOS/main.jsbundle
-  //
-  // and uncomment the next following line
-  // jsCodeLocation = [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
-
-  RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
+  RCTRootView* rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
                                                       moduleName:@"RemoteNative"
                                                    launchOptions:launchOptions];
 
@@ -45,7 +38,27 @@
   rootViewController.view = rootView;
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
+  
+  [self initAudio];
+  
   return YES;
+}
+
+-(void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+  if ([keyPath isEqual:@"outputVolume"]) {
+    NSLog(@"Reload from remote");
+    [RCTRootView reloadAll];
+  }
+}
+
+-(void)initAudio
+{
+  BOOL activated = [[AVAudioSession sharedInstance] setActive:YES error:nil];
+  [[AVAudioSession sharedInstance] addObserver:self
+                forKeyPath:@"outputVolume"
+                options:0
+                context:nil];
 }
 
 @end
