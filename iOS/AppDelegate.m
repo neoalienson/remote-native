@@ -39,22 +39,44 @@
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
   
-  [self initAudio];
-  
   return YES;
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
+  [self initAudio];
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application
+{
+  [[AVAudioSession sharedInstance] removeObserver:self forKeyPath:@"outputVolume"];
 }
 
 -(void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
   if ([keyPath isEqual:@"outputVolume"]) {
     NSLog(@"Reload from remote");
+    
     [RCTRootView reloadAll];
+    
+    UIView* rootView = self.window.rootViewController.view;
+    
+    [UIView animateWithDuration:0.5 animations:^{
+      rootView.layer.opacity = 0;
+    } completion:^(BOOL done){
+      rootView.layer.opacity = 1;
+    }
+     ];
   }
 }
 
 -(void)initAudio
 {
-  BOOL activated = [[AVAudioSession sharedInstance] setActive:YES error:nil];
+  [[AVAudioSession sharedInstance] setActive:YES error:nil];
+  
+  // enjoy music during development
+  [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+  
   [[AVAudioSession sharedInstance] addObserver:self
                 forKeyPath:@"outputVolume"
                 options:0
